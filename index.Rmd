@@ -1,0 +1,138 @@
+---
+title: "Maatschappelijke Verantwoording Zorg"
+subtitle: "Een exploratieve analyse naar oneigenlijke winst"
+author: "Kim Schouten"
+date: "30 november 2021"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+library(kableExtra)
+knitr::opts_chunk$set(echo = FALSE)
+
+source("data.R")
+selected_data <- read_data()
+
+```
+
+```{css, echo=FALSE}
+#outliers {
+  height: 100%;
+}
+
+```
+
+## Maatschappelijke Verantwoording Zorg
+
+ - Jaarverslag informatie van zorgaanbieders
+ - Voorlopige data van 2020
+ - Publieke data op jaarverantwoordingzorg.nl
+
+## Analyse Opzet
+
+ - Exploratief onderzoek:
+   - Geen sluitende conclusies
+ - Wel mogelijke aanleidingen voor verder onderzoek
+ - Primair doel: Oneigenlijke winsten opsporen
+ - Secundair doel: Data inconsistenties vinden
+
+
+## Oneigenlijke winst 
+
+ - Wanneer bedrijven meer verdienen dan redelijkerwijs verwacht
+   - Winst kan gedrukt worden door investeringsuitgaven etc.
+   - Daarom kijken we naar 'Totaal opbrengsten zorgprestaties en maatschappelijke ondersteuning'
+
+## Oneigenlijke winst 
+
+ - Wanneer bedrijven meer verdienen dan redelijkerwijs verwacht
+ - Zorg is mensenwerk: inkomsten en personeelsuitgaven gaan samen op (als het goed is)
+ - Daarom vergelijken we opbrengsten met 
+  1. totale uitgaven aan personeel, 
+  2. totaal aantal fte in organisatie, 
+  3. aantal behandelde patienten
+ - De uitschieters in deze vergelijkingen zijn kandidaten voor verder onderzoek
+ - Opmerking: stichtingen zijn niet meegenomen in deze analyses
+
+
+## Opbrengsten vs. personeelsuitgaven
+
+```{r cars, echo = FALSE}
+plot_income_vs_personnel_costs(selected_data)
+
+```
+
+## Opbrengsten vs. personeelsuitgaven
+
+```{r, echo = FALSE, warning = FALSE}
+
+personnel_outliers <- prepare_income_vs_personnel_costs(selected_data) %>% compute_outliers()
+create_outlier_plot(personnel_outliers, x = log_costs, personnel_costs_current = personnel_costs_current)
+
+```
+
+- Outliers: >3 standaard deviaties boven modelwaarde (blauw)
+- Modelwaarde: GAM model voorspelt inkomsten o.b.v. personeels kosten
+
+## Opbrengsten vs. aantal fte
+
+```{r, echo = FALSE, warning = FALSE}
+fte_outliers <- prepare_income_vs_fte(selected_data) %>% compute_outliers()
+create_outlier_plot(fte_outliers, x = log_fte, total_fte = total_fte)
+```
+
+- Mogelijk data probleem: niet alle werkenden geregistreerd
+- Wat als (meerdere) eigenaren zelf veel meewerken? 
+
+
+## Opbrengsten vs. aantal patiënten
+
+```{r, echo = FALSE, warning = FALSE}
+patient_outliers <- prepare_income_vs_patients(selected_data) %>% compute_outliers
+
+patient_plot <- create_outlier_plot(patient_outliers, x = log_patients, total_patients = patients_max)
+patient_plot
+```
+
+- Max. aantal patienten = patienten begin 2020 + nieuwe patienten gedurende 2020
+- Over de gehele linie liggen de inkomsten per patiënt vrij hoog
+
+## Opbrengsten vs. aantal patiënten
+
+```{r, echo = FALSE, warning = FALSE}
+patient_plot
+```
+
+- Minder 'statistische' outliers, maar niet minder problemen
+- Mogelijk data probleem: patiëntregistratie niet op orde?
+
+## Outliers
+
+<div style="overflow: scroll; height: 80%">
+```{r, echo = FALSE, warning = FALSE}
+
+purrr::reduce(
+   list(
+      personnel_outliers %>% select(name, code, personnel_costs = outlier),
+      fte_outliers %>% select(code, fte = outlier),
+      patient_outliers %>% select(code, patients = outlier)),
+   left_join, by = "code") %>%
+   mutate(outlier_score = personnel_costs + fte + patients) %>%
+   filter(outlier_score > 0) %>%
+   arrange(desc(outlier_score)) %>%
+   # Create table
+   knitr::kable(booktabs = TRUE) %>%
+   kable_styling(font_size = 10) %>%
+   add_header_above(c(" " = 2, "outliers" = 3, " " = 1))
+```
+</div>
+
+## Conclusies
+
+- Sommige aanbieders hebben onverklaarbaar hoge opbrengsten
+- Verder onderzoek:
+  - Zijn er andere factoren die dit kunnen verklaren?
+  - Is er wellicht een probleem met de data?
+  - Onderzoek het bedrijf: mogelijk oneigenlijke winst 
+  
+  
