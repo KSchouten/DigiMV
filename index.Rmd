@@ -71,7 +71,7 @@ create_outlier_plot(personnel_outliers, x = log_costs, personnel_costs_current =
 
 ```
 
-- Outliers: >3 standaard deviaties boven modelwaarde (blauw)
+- Outliers: >2 standaard deviaties boven modelwaarde (blauw)
 - Modelwaarde: GAM model voorspelt inkomsten o.b.v. personeels kosten
 
 ## Opbrengsten vs. aantal fte
